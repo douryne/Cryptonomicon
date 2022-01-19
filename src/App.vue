@@ -96,7 +96,7 @@
           <div
             v-for="t in tickers"
             :key="t"
-            @click="selectedTicker = t"
+            @click="selectTicker(t)"
             :class="{
               'border-4': selectedTicker === t,
             }"
@@ -138,10 +138,12 @@
           {{ selectedTicker.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
-          <div class="bg-purple-800 border w-10 h-24"></div>
-          <div class="bg-purple-800 border w-10 h-32"></div>
-          <div class="bg-purple-800 border w-10 h-48"></div>
-          <div class="bg-purple-800 border w-10 h-16"></div>
+          <div
+            v-for="(bar, idx) in normalizeGraph()"
+            :key="idx"
+            :style="`height: ${bar}%`"
+            class="bg-purple-800 border w-10"
+          ></div>
         </div>
         <button
           @click="selectedTicker = null"
@@ -184,26 +186,45 @@ export default {
       ticker: "",
       tickers: [],
       selectedTicker: null,
+      graph: [],
     };
   },
 
   methods: {
     add() {
-      const newTicker = {
+      const currentTicker = {
         name: this.ticker,
         price: "-",
       };
 
-      this.tickers.push(newTicker);
+      this.tickers.push(currentTicker);
       setInterval(async () => {
         const response = await fetch(
-          `${process.env.VUE_APP_SERVER_URL}/getData?coin=${newTicker.name}`
+          `${process.env.VUE_APP_SERVER_URL}/getData?coin=${currentTicker.name}`
         );
         const data = await response.json();
-        this.tickers.find((t) => t.name === newTicker.name).price =
+        this.tickers.find((t) => t.name === currentTicker.name).price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+
+        if (this.selectedTicker?.name === currentTicker.name) {
+          this.graph.push(data.USD);
+        }
       }, 3000);
       this.ticker = "";
+    },
+
+    selectTicker(ticker) {
+      this.selectedTicker = ticker;
+      this.graph = [];
+    },
+
+    normalizeGraph() {
+      const minValue = Math.min(...this.graph);
+      const maxValue = Math.max(...this.graph);
+
+      return this.graph.map(
+        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
+      );
     },
 
     handleDelete(tickerToDelete) {

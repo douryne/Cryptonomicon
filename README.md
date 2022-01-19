@@ -20,5 +20,15 @@ npm run build
 npm run lint
 ```
 
+### Starts server.js
+```
+npm run server
+```
+
+### Compiles and hot-reloads for development and starts server.js
+```
+npm run dev
+```
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
