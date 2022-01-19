@@ -182,11 +182,7 @@ export default {
   data() {
     return {
       ticker: "",
-      tickers: [
-        { name: "DEMO1", price: "-" },
-        { name: "DEMO2", price: "5000" },
-        { name: "DEMO3", price: "-" },
-      ],
+      tickers: [],
       selectedTicker: null,
     };
   },
@@ -199,13 +195,13 @@ export default {
       };
 
       this.tickers.push(newTicker);
-      console.log(process.env.VUE_APP_SERVER_URL);
       setInterval(async () => {
         const response = await fetch(
           `${process.env.VUE_APP_SERVER_URL}/getData?coin=${newTicker.name}`
         );
         const data = await response.json();
-        console.log(data);
+        this.tickers.find((t) => t.name === newTicker.name).price =
+          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
       }, 3000);
       this.ticker = "";
     },
