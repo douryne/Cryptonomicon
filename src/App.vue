@@ -65,8 +65,10 @@
               >
                 CHD
               </span>
+            </div> -->
+            <div v-if="tickerInTickersCheck()" class="text-sm text-red-600">
+              Такой тикер уже добавлен
             </div>
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div> -->
           </div>
         </div>
         <button
@@ -193,9 +195,11 @@ export default {
   methods: {
     add() {
       const currentTicker = {
-        name: this.ticker,
+        name: this.ticker.toUpperCase(),
         price: "-",
       };
+
+      if (this.tickerInTickersCheck()) return;
 
       this.tickers.push(currentTicker);
       setInterval(async () => {
@@ -211,6 +215,16 @@ export default {
         }
       }, 3000);
       this.ticker = "";
+    },
+
+    tickerInTickersCheck() {
+      if (
+        this.tickers.find(
+          (t) => t.name.toUpperCase() === this.ticker.toUpperCase()
+        )
+      )
+        return true;
+      return false;
     },
 
     selectTicker(ticker) {
