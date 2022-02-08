@@ -34,6 +34,7 @@
             <div class="mt-1 relative rounded-md shadow-md">
               <input
                 v-model="ticker"
+                @input="errorMessage = ''"
                 @keydown.enter="add"
                 type="text"
                 name="wallet"
@@ -66,8 +67,8 @@
                 CHD
               </span>
             </div> -->
-            <div v-if="tickerInTickersCheck()" class="text-sm text-red-600">
-              Такой тикер уже добавлен
+            <div v-if="errorMessage" class="text-sm text-red-600">
+              {{ errorMessage }}
             </div>
           </div>
         </div>
@@ -114,7 +115,7 @@
             </div>
             <div class="w-full border-t border-gray-200"></div>
             <button
-              @click.stop="handleDelete(t)"
+              @click.stop="handleDelete(t.name)"
               class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 hover:opacity-20 transition-all focus:outline-none"
             >
               <svg
@@ -189,24 +190,43 @@ export default {
       tickers: [],
       selectedTicker: null,
       graph: [],
+      errorMessage: "",
     };
   },
 
   methods: {
     add() {
       const currentTicker = {
-        name: this.ticker.toUpperCase(),
+        name: this.ticker.toUpperCase().trim(),
         price: "-",
       };
 
-      if (this.tickerInTickersCheck()) return;
+      if (this.tickerInTickersCheck()) {
+        this.errorMessage = "Такой тикер уже добавлен";
+        return;
+      }
+      if (this.inputIsEmty()) {
+        this.errorMessage = "Введите тикер";
+        return;
+      }
 
       this.tickers.push(currentTicker);
-      setInterval(async () => {
+      const interval = setInterval(async () => {
         const response = await fetch(
           `${process.env.VUE_APP_SERVER_URL}/getData?coin=${currentTicker.name}`
         );
+        if (!response.ok) {
+          clearInterval(interval);
+          return;
+        }
         const data = await response.json();
+        if (!data.USD) {
+          this.handleDelete(currentTicker.name);
+          this.errorMessage =
+            "Возможно вы ввели неправильный тикер. Попробуйте еще раз";
+          clearInterval(interval);
+          return;
+        }
         this.tickers.find((t) => t.name === currentTicker.name).price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
 
@@ -217,10 +237,15 @@ export default {
       this.ticker = "";
     },
 
+    inputIsEmty() {
+      if (!this.ticker) return true;
+      return false;
+    },
+
     tickerInTickersCheck() {
       if (
         this.tickers.find(
-          (t) => t.name.toUpperCase() === this.ticker.toUpperCase()
+          (t) => t.name.toUpperCase() === this.ticker.toUpperCase().trim()
         )
       )
         return true;
@@ -242,7 +267,7 @@ export default {
     },
 
     handleDelete(tickerToDelete) {
-      this.tickers = this.tickers.filter((t) => t !== tickerToDelete);
+      this.tickers = this.tickers.filter((t) => t.name !== tickerToDelete);
     },
   },
 };

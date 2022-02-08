@@ -23,10 +23,20 @@ app.use("/", serveStatic(path.join(__dirname, "/dist")));
 
 app.get("/getData", async (req, res) => {
   const coinName = req.query.coin;
-
-  let data = await axios.get(
-    `https://min-api.cryptocompare.com/data/price?fsym=${coinName}&tsyms=USD&api_key=${apiKey}`
-  );
+  let data;
+  try {
+    data = await axios.get(
+      `https://min-api.cryptocompare.com/data/price?fsym=${coinName}&tsyms=USD&api_key=${apiKey}`
+    );
+  } catch (error) {
+    const status = error?.response?.status;
+    if (status) {
+      res.status(status).end(error.message);
+    } else {
+      res.status(500).end(error.message);
+    }
+    return;
+  }
   res.json(data.data);
 });
 
