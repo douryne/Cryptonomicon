@@ -185,7 +185,7 @@ export default {
     };
   },
 
-  async beforeMount() {
+  async mounted() {
     const response = await fetch(`${process.env.VUE_APP_SERVER_URL}/getData`);
     const data = await response.json();
     this.coinList = Object.values(data?.Data);
