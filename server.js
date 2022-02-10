@@ -25,9 +25,15 @@ app.get("/getData", async (req, res) => {
   const coinName = req.query.coin;
   let data;
   try {
-    data = await axios.get(
-      `https://min-api.cryptocompare.com/data/price?fsym=${coinName}&tsyms=USD&api_key=${apiKey}`
-    );
+    if (coinName) {
+      data = await axios.get(
+        `https://min-api.cryptocompare.com/data/price?fsym=${coinName}&tsyms=USD&api_key=${apiKey}`
+      );
+    } else {
+      data = await axios.get(
+        `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
+      );
+    }
   } catch (error) {
     const status = error?.response?.status;
     if (status) {

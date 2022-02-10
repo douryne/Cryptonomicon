@@ -34,7 +34,7 @@
             <div class="mt-1 relative rounded-md shadow-md">
               <input
                 v-model="ticker"
-                @input="errorMessage = ''"
+                @input="findCoincidences(ticker), (errorMessage = '')"
                 @keydown.enter="add"
                 type="text"
                 name="wallet"
@@ -43,30 +43,19 @@
                 placeholder="Например DOGE"
               />
             </div>
-            <!-- <div
+            <div
+              v-if="searchHints.length"
               class="flex bg-white shadow-md p-1 rounded-md flex-wrap"
             >
               <span
+                v-for="hint in searchHints"
+                :key="hint.Symbol"
+                @click="(ticker = hint.Symbol), add()"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
-                BTC
+                {{ hint.Symbol }}
               </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                DOGE
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                BCH
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                CHD
-              </span>
-            </div> -->
+            </div>
             <div v-if="errorMessage" class="text-sm text-red-600">
               {{ errorMessage }}
             </div>
@@ -191,7 +180,15 @@ export default {
       selectedTicker: null,
       graph: [],
       errorMessage: "",
+      coinList: [],
+      searchHints: [],
     };
+  },
+
+  async beforeMount() {
+    const response = await fetch(`${process.env.VUE_APP_SERVER_URL}/getData`);
+    const data = await response.json();
+    this.coinList = Object.values(data?.Data);
   },
 
   methods: {
@@ -234,7 +231,17 @@ export default {
           this.graph.push(data.USD);
         }
       }, 3000);
+      this.searchHints = [];
       this.ticker = "";
+    },
+
+    findCoincidences(searchReq) {
+      this.searchHints = this.coinList
+        .filter(
+          (t) => searchReq && t.Symbol.startsWith(searchReq.toUpperCase())
+        )
+        .slice(0)
+        .slice(-4);
     },
 
     inputIsEmty() {
