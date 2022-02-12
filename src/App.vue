@@ -83,10 +83,15 @@
         </button>
       </section>
       <template v-if="tickers.length">
+        <input
+          v-model="filter"
+          type="text"
+          class="max-w-xs block w-full pr-10 border-gray-300 text-gray-600 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
+        />
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
-            v-for="t in tickers"
+            v-for="t in filteredTickers()"
             :key="t"
             @click="selectTicker(t)"
             :class="{
@@ -176,6 +181,7 @@ export default {
   data() {
     return {
       ticker: "",
+      filter: "",
       tickers: [],
       selectedTicker: null,
       graph: [],
@@ -254,6 +260,12 @@ export default {
           this.graph.push(data.USD);
         }
       }, 3000);
+    },
+
+    filteredTickers() {
+      return this.tickers.filter((ticker) =>
+        ticker.name.includes(this.filter.toUpperCase().trim())
+      );
     },
 
     findCoincidences(searchReq) {
