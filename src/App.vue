@@ -83,11 +83,32 @@
         </button>
       </section>
       <template v-if="tickers.length">
-        <input
-          v-model="filter"
-          type="text"
-          class="max-w-xs block w-full pr-10 border-gray-300 text-gray-600 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-        />
+        <hr class="w-full border-t border-gray-600 mt-5" />
+        <div>
+          <button
+            @click="page -= 1"
+            :disabled="page > 1 === false"
+            class="disabled:bg-gray-100 mt-4 inline-flex items-center py-3 px-5 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            Назад
+          </button>
+          <button
+            @click="page += 1"
+            :disabled="hasNextPage === false"
+            class="ml-5 mt-4 inline-flex items-center py-3 px-5 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            Вперед
+          </button>
+          <div class="flex items-center my-4">
+            Фильтр:
+            <input
+              v-model="filter"
+              @input="page = 1"
+              type="text"
+              class="ml-2 max-w-xs block w-full pr-10 border-gray-300 text-gray-600 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md disabled:bg-gray-300"
+            />
+          </div>
+        </div>
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
@@ -188,6 +209,8 @@ export default {
       errorMessage: "",
       coinList: [],
       searchHints: [],
+      page: 1,
+      hasNextPage: true,
     };
   },
 
@@ -224,6 +247,8 @@ export default {
 
       this.tickers.push(currentTicker);
 
+      this.filter = "";
+
       localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
 
       this.subscribeToUpdates(currentTicker.name);
@@ -234,10 +259,6 @@ export default {
 
     subscribeToUpdates(tickerName) {
       const interval = setInterval(async () => {
-        if (!this.tickerInTickersCheck(tickerName)) {
-          clearInterval(interval);
-          return;
-        }
         const response = await fetch(
           `${process.env.VUE_APP_SERVER_URL}/getData?coin=${tickerName}`
         );
@@ -253,6 +274,11 @@ export default {
           clearInterval(interval);
           return;
         }
+
+        if (!this.tickerInTickersCheck(tickerName)) {
+          clearInterval(interval);
+          return;
+        }
         this.tickers.find((t) => t.name === tickerName).price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
 
@@ -263,9 +289,15 @@ export default {
     },
 
     filteredTickers() {
-      return this.tickers.filter((ticker) =>
+      const start = (this.page - 1) * 6;
+      const end = 6 * this.page;
+      const filteredTickers = this.tickers.filter((ticker) =>
         ticker.name.includes(this.filter.toUpperCase().trim())
       );
+
+      this.hasNextPage = filteredTickers.length > end;
+
+      return filteredTickers.slice(start, end);
     },
 
     findCoincidences(searchReq) {
@@ -282,8 +314,7 @@ export default {
     },
 
     tickerInTickersCheck(tickerName) {
-      if (this.tickers.find((t) => t.name.toUpperCase() === tickerName))
-        return true;
+      if (this.tickers.find((t) => t.name === tickerName)) return true;
       return false;
     },
 
