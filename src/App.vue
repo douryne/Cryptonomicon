@@ -185,7 +185,16 @@ export default {
     };
   },
 
-  async mounted() {
+  async created() {
+    const tickersData = localStorage.getItem("cryptonomicon-list");
+
+    if (tickersData) {
+      this.tickers = JSON.parse(tickersData);
+      this.tickers.forEach((ticker) => {
+        this.subscribeToUpdates(ticker.name);
+      });
+    }
+
     const response = await fetch(`${process.env.VUE_APP_SERVER_URL}/getData`);
     const data = await response.json();
     this.coinList = Object.values(data?.Data);
@@ -198,7 +207,7 @@ export default {
         price: "-",
       };
 
-      if (this.tickerInTickersCheck()) {
+      if (this.tickerInTickersCheck(currentTicker.name)) {
         this.errorMessage = "Такой тикер уже добавлен";
         return;
       }
@@ -208,9 +217,23 @@ export default {
       }
 
       this.tickers.push(currentTicker);
+
+      localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
+
+      this.subscribeToUpdates(currentTicker.name);
+
+      this.searchHints = [];
+      this.ticker = "";
+    },
+
+    subscribeToUpdates(tickerName) {
       const interval = setInterval(async () => {
+        if (!this.tickerInTickersCheck(tickerName)) {
+          clearInterval(interval);
+          return;
+        }
         const response = await fetch(
-          `${process.env.VUE_APP_SERVER_URL}/getData?coin=${currentTicker.name}`
+          `${process.env.VUE_APP_SERVER_URL}/getData?coin=${tickerName}`
         );
         if (!response.ok) {
           clearInterval(interval);
@@ -218,21 +241,19 @@ export default {
         }
         const data = await response.json();
         if (!data.USD) {
-          this.handleDelete(currentTicker.name);
+          this.handleDelete(tickerName);
           this.errorMessage =
             "Возможно вы ввели неправильный тикер. Попробуйте еще раз";
           clearInterval(interval);
           return;
         }
-        this.tickers.find((t) => t.name === currentTicker.name).price =
+        this.tickers.find((t) => t.name === tickerName).price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
 
-        if (this.selectedTicker?.name === currentTicker.name) {
+        if (this.selectedTicker?.name === tickerName) {
           this.graph.push(data.USD);
         }
       }, 3000);
-      this.searchHints = [];
-      this.ticker = "";
     },
 
     findCoincidences(searchReq) {
@@ -240,7 +261,6 @@ export default {
         .filter(
           (t) => searchReq && t.Symbol.startsWith(searchReq.toUpperCase())
         )
-        .slice(0)
         .slice(-4);
     },
 
@@ -249,12 +269,8 @@ export default {
       return false;
     },
 
-    tickerInTickersCheck() {
-      if (
-        this.tickers.find(
-          (t) => t.name.toUpperCase() === this.ticker.toUpperCase().trim()
-        )
-      )
+    tickerInTickersCheck(tickerName) {
+      if (this.tickers.find((t) => t.name.toUpperCase() === tickerName))
         return true;
       return false;
     },
@@ -275,6 +291,7 @@ export default {
 
     handleDelete(tickerToDelete) {
       this.tickers = this.tickers.filter((t) => t.name !== tickerToDelete);
+      localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
     },
   },
 };
