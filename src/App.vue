@@ -103,7 +103,6 @@
             Фильтр:
             <input
               v-model="filter"
-              @input="page = 1"
               type="text"
               class="ml-2 max-w-xs block w-full pr-10 border-gray-300 text-gray-600 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md disabled:bg-gray-300"
             />
@@ -215,6 +214,14 @@ export default {
   },
 
   async created() {
+    const windowData = Object.fromEntries(
+      new URL(window.location).searchParams.entries()
+    );
+
+    if (windowData.filter) this.filter = windowData.filter;
+
+    if (windowData.page) this.page = windowData.page;
+
     const tickersData = localStorage.getItem("cryptonomicon-list");
 
     if (tickersData) {
@@ -335,6 +342,25 @@ export default {
     handleDelete(tickerToDelete) {
       this.tickers = this.tickers.filter((t) => t.name !== tickerToDelete);
       localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
+    },
+  },
+
+  watch: {
+    filter() {
+      this.page = 1;
+
+      window.history.pushState(
+        null,
+        document.title,
+        `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
+      );
+    },
+    page() {
+      window.history.pushState(
+        null,
+        document.title,
+        `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
+      );
     },
   },
 };
