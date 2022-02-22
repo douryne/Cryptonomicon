@@ -287,11 +287,9 @@ export default {
         return;
       }
 
-      this.tickers.push(currentTicker);
+      this.tickers = [...this.tickers, currentTicker];
 
       this.filter = "";
-
-      localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
 
       this.subscribeToUpdates(currentTicker.name);
 
@@ -348,7 +346,6 @@ export default {
       if (this.selectedTicker?.name === tickerToDelete) {
         this.selectedTicker = null;
       }
-      localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
     },
   },
 
@@ -360,6 +357,9 @@ export default {
       if (this.paginatedTickers.length === 0 && this.page > 1) {
         this.page -= 1;
       }
+    },
+    tickers() {
+      localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
     },
     filter() {
       this.page = 1;
