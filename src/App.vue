@@ -345,7 +345,7 @@ export default {
 
     handleDelete(tickerToDelete) {
       this.tickers = this.tickers.filter((t) => t.name !== tickerToDelete);
-      if (this.selectedTicker.name === tickerToDelete) {
+      if (this.selectedTicker?.name === tickerToDelete) {
         this.selectedTicker = null;
       }
       localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
@@ -355,6 +355,11 @@ export default {
   watch: {
     selectedTicker() {
       this.graph = [];
+    },
+    paginatedTickers() {
+      if (this.paginatedTickers.length === 0 && this.page > 1) {
+        this.page -= 1;
+      }
     },
     filter() {
       this.page = 1;
