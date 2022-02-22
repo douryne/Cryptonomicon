@@ -275,6 +275,10 @@ export default {
         page: this.page,
       };
     },
+    inputIsEmty() {
+      if (!this.ticker) return true;
+      return false;
+    },
   },
 
   methods: {
@@ -288,7 +292,7 @@ export default {
         this.errorMessage = "Такой тикер уже добавлен";
         return;
       }
-      if (this.inputIsEmty()) {
+      if (this.inputIsEmty) {
         this.errorMessage = "Введите тикер";
         return;
       }
@@ -331,11 +335,6 @@ export default {
           this.graph.push(data.USD);
         }
       }, 3000);
-    },
-
-    inputIsEmty() {
-      if (!this.ticker) return true;
-      return false;
     },
 
     tickerInTickersCheck(tickerName) {
