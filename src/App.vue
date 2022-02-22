@@ -341,16 +341,21 @@ export default {
 
     selectTicker(ticker) {
       this.selectedTicker = ticker;
-      this.graph = [];
     },
 
     handleDelete(tickerToDelete) {
       this.tickers = this.tickers.filter((t) => t.name !== tickerToDelete);
+      if (this.selectedTicker.name === tickerToDelete) {
+        this.selectedTicker = null;
+      }
       localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
     },
   },
 
   watch: {
+    selectedTicker() {
+      this.graph = [];
+    },
     filter() {
       this.page = 1;
 
