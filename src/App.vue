@@ -156,7 +156,7 @@
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div
-            v-for="(bar, idx) in normalizeGraph()"
+            v-for="(bar, idx) in normalizedGraph"
             :key="idx"
             :style="`height: ${bar}%`"
             class="bg-purple-800 border w-10"
@@ -259,6 +259,16 @@ export default {
         )
         .slice(-4);
     },
+    normalizedGraph() {
+      const minValue = Math.min(...this.graph);
+      const maxValue = Math.max(...this.graph);
+      if (minValue === maxValue) {
+        return this.graph.map(() => 50);
+      }
+      return this.graph.map(
+        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
+      );
+    },
   },
 
   methods: {
@@ -332,15 +342,6 @@ export default {
     selectTicker(ticker) {
       this.selectedTicker = ticker;
       this.graph = [];
-    },
-
-    normalizeGraph() {
-      const minValue = Math.min(...this.graph);
-      const maxValue = Math.max(...this.graph);
-
-      return this.graph.map(
-        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
-      );
     },
 
     handleDelete(tickerToDelete) {
