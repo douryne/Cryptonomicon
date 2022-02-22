@@ -34,7 +34,7 @@
             <div class="mt-1 relative rounded-md shadow-md">
               <input
                 v-model="ticker"
-                @input="findCoincidences(ticker), (errorMessage = '')"
+                @input="errorMessage = ''"
                 @keydown.enter="add"
                 type="text"
                 name="wallet"
@@ -44,11 +44,11 @@
               />
             </div>
             <div
-              v-if="searchHints.length"
+              v-if="foundCoincidences.length"
               class="flex bg-white shadow-md p-1 rounded-md flex-wrap"
             >
               <span
-                v-for="hint in searchHints"
+                v-for="hint in foundCoincidences"
                 :key="hint.Symbol"
                 @click="(ticker = hint.Symbol), add()"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
@@ -111,7 +111,7 @@
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
-            v-for="t in filteredTickers()"
+            v-for="t in paginatedTickers"
             :key="t"
             @click="selectTicker(t)"
             :class="{
@@ -207,9 +207,7 @@ export default {
       graph: [],
       errorMessage: "",
       coinList: [],
-      searchHints: [],
       page: 1,
-      hasNextPage: true,
     };
   },
 
@@ -236,6 +234,33 @@ export default {
     this.coinList = Object.values(data?.Data);
   },
 
+  computed: {
+    startIndex() {
+      return (this.page - 1) * 6;
+    },
+    endIndex() {
+      return 6 * this.page;
+    },
+    filteredTickers() {
+      return this.tickers.filter((ticker) =>
+        ticker.name.includes(this.filter.toUpperCase().trim())
+      );
+    },
+    paginatedTickers() {
+      return this.filteredTickers.slice(this.startIndex, this.endIndex);
+    },
+    hasNextPage() {
+      return this.filteredTickers.length > this.endIndex;
+    },
+    foundCoincidences() {
+      return this.coinList
+        .filter(
+          (t) => this.ticker && t.Symbol.startsWith(this.ticker.toUpperCase())
+        )
+        .slice(-4);
+    },
+  },
+
   methods: {
     add() {
       const currentTicker = {
@@ -260,7 +285,6 @@ export default {
 
       this.subscribeToUpdates(currentTicker.name);
 
-      this.searchHints = [];
       this.ticker = "";
     },
 
@@ -293,26 +317,6 @@ export default {
           this.graph.push(data.USD);
         }
       }, 3000);
-    },
-
-    filteredTickers() {
-      const start = (this.page - 1) * 6;
-      const end = 6 * this.page;
-      const filteredTickers = this.tickers.filter((ticker) =>
-        ticker.name.includes(this.filter.toUpperCase().trim())
-      );
-
-      this.hasNextPage = filteredTickers.length > end;
-
-      return filteredTickers.slice(start, end);
-    },
-
-    findCoincidences(searchReq) {
-      this.searchHints = this.coinList
-        .filter(
-          (t) => searchReq && t.Symbol.startsWith(searchReq.toUpperCase())
-        )
-        .slice(-4);
     },
 
     inputIsEmty() {
