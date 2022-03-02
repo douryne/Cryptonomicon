@@ -22,12 +22,12 @@ const apiKey = `${process.env.CRYPTO_API_KEY}`;
 app.use("/", serveStatic(path.join(__dirname, "/dist")));
 
 app.get("/getData", async (req, res) => {
-  const coinName = req.query.coin;
+  const tickers = req.query.tickers;
   let data;
   try {
-    if (coinName) {
+    if (tickers) {
       data = await axios.get(
-        `https://min-api.cryptocompare.com/data/price?fsym=${coinName}&tsyms=USD&api_key=${apiKey}`
+        `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${tickers}&tsyms=USD&api_key=${apiKey}`
       );
     } else {
       data = await axios.get(
