@@ -1,10 +1,49 @@
 const express = require("express");
+const WebSocket = require("ws");
+const http = require("http");
 const serveStatic = require("serve-static");
 const path = require("path");
 const axios = require("axios");
 require("dotenv").config();
 
+const port = process.env.PORT || 8081;
 const app = express();
+const server = http.createServer(app);
+const wsServer = new WebSocket.Server({ server });
+
+const apiKey = `${process.env.CRYPTO_API_KEY}`;
+
+const socket = new WebSocket(
+  `wss://streamer.cryptocompare.com/v2?api_key=${apiKey}`
+);
+
+wsServer.on("connection", onConnect);
+
+function onConnect(wsClient) {
+  console.log("Новый пользователь");
+
+  wsClient.on("message", (message) => {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(message);
+    }
+
+    socket.addEventListener(
+      "open",
+      () => {
+        socket.send(message);
+      },
+      { once: true }
+    );
+
+    socket.addEventListener("message", (e) => {
+      wsClient.send(e.data);
+    });
+  });
+
+  wsClient.on("close", () => {
+    console.log("Пользователь отключился");
+  });
+}
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -16,24 +55,15 @@ app.use(function (req, res, next) {
   next();
 });
 
-const apiKey = `${process.env.CRYPTO_API_KEY}`;
-
 //here we are configuring dist to serve app files
 app.use("/", serveStatic(path.join(__dirname, "/dist")));
 
 app.get("/getData", async (req, res) => {
-  const tickers = req.query.tickers;
   let data;
   try {
-    if (tickers) {
-      data = await axios.get(
-        `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${tickers}&tsyms=USD&api_key=${apiKey}`
-      );
-    } else {
-      data = await axios.get(
-        `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
-      );
-    }
+    data = await axios.get(
+      `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
+    );
   } catch (error) {
     const status = error?.response?.status;
     if (status) {
@@ -43,6 +73,7 @@ app.get("/getData", async (req, res) => {
     }
     return;
   }
+  wsServer.readyState = WebSocket.OPEN;
   res.json(data.data);
 });
 
@@ -51,6 +82,5 @@ app.get(/.*/, function (req, res) {
   res.sendFile(path.join(__dirname, "/dist/index.html"));
 });
 
-const port = process.env.PORT || 8081;
-app.listen(port);
+server.listen(port);
 console.log(`app is listening on port: ${port}`);

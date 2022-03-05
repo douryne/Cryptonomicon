@@ -233,7 +233,9 @@ export default {
       });
     }
 
-    const response = await fetch(`${process.env.VUE_APP_SERVER_URL}/getData`);
+    const response = await fetch(
+      `${process.env.VUE_APP_SERVER_PROTOCOL}://${process.env.VUE_APP_SERVER_URL}/getData`
+    );
     const data = await response.json();
     this.coinList = Object.values(data?.Data);
   },
