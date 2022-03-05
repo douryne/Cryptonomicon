@@ -1,6 +1,8 @@
 const tickersHandlers = new Map();
 
-const socket = new WebSocket(`ws://${process.env.VUE_APP_SERVER_URL}`);
+const socket = new WebSocket(
+  `${process.env.VUE_APP_SERVER_WEBSOCKET_PROTOCOL}://${process.env.VUE_APP_SERVER_URL}`
+);
 const AGGREGATE_INDEX = "5";
 
 socket.addEventListener("message", (message) => {
