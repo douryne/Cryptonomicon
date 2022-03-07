@@ -10,7 +10,15 @@ socket.addEventListener("message", (message) => {
     TYPE: type,
     FROMSYMBOL: currency,
     PRICE: newPrice,
+    PARAMETER: parameter,
+    MESSAGE: errorMessage,
   } = JSON.parse(message.data);
+  if (errorMessage === "INVALID_SUB") {
+    const currency = parameter.split("~")[2];
+    const handlers = tickersHandlers.get(currency) || [];
+    handlers.forEach((fn) => fn());
+    return;
+  }
   if (type !== AGGREGATE_INDEX || newPrice === undefined) return;
   const handlers = tickersHandlers.get(currency) || [];
   handlers.forEach((fn) => fn(newPrice));

@@ -116,6 +116,7 @@
             @click="selectTicker(t)"
             :class="{
               'border-4': selectedTicker === t,
+              'bg-red-100': t.invalid === false,
             }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
@@ -130,7 +131,7 @@
             <div class="w-full border-t border-gray-200"></div>
             <button
               @click.stop="handleDelete(t.name)"
-              class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 hover:opacity-20 transition-all focus:outline-none"
+              class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 transition-all focus:outline-none"
             >
               <svg
                 class="h-5 w-5"
@@ -292,6 +293,7 @@ export default {
       const currentTicker = {
         name: this.ticker.toUpperCase().trim(),
         price: "-",
+        invalid: true,
       };
 
       if (this.tickerInTickersCheck(currentTicker.name)) {
@@ -313,14 +315,15 @@ export default {
     },
 
     updateTicker(tickerName, price) {
-      this.tickers
-        .filter((t) => t.name === tickerName)
-        .forEach((t) => {
-          if (this.selectedTicker === t) {
-            this.graph.push(price);
-          }
-          t.price = price;
-        });
+      const currency = this.tickers.find((t) => t.name === tickerName);
+      if (!price) {
+        currency.invalid = false;
+        return;
+      }
+      if (this.selectedTicker === currency) {
+        this.graph.push(price);
+      }
+      currency.price = price;
     },
 
     formatPrice(price) {
