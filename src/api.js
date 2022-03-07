@@ -16,6 +16,16 @@ socket.addEventListener("message", (message) => {
   handlers.forEach((fn) => fn(newPrice));
 });
 
+export function loadTickersList() {
+  return fetch(
+    `${process.env.VUE_APP_SERVER_PROTOCOL}://${process.env.VUE_APP_SERVER_URL}/getData`
+  )
+    .then((res) => res.json())
+    .then((data) => {
+      return Object.values(data?.Data);
+    });
+}
+
 const sendToWebSocket = (message) => {
   if (socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(message));
