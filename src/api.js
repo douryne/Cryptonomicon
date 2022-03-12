@@ -17,7 +17,6 @@ socket.addEventListener("message", (message) => {
     PARAMETER: parameter,
     MESSAGE: errorMessage,
   } = JSON.parse(message.data);
-  if (type === "5") console.log(currency);
   if (errorMessage === "INVALID_SUB") {
     const currency = parameter.split("~")[2];
     const toSymbol = parameter.split("~")[3];
