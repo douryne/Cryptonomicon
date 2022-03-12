@@ -19,28 +19,60 @@ const socket = new WebSocket(
 
 wsServer.on("connection", onConnect);
 
+function sendWhenOpen(message) {
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(message);
+  }
+
+  socket.addEventListener(
+    "open",
+    () => {
+      socket.send(message);
+    },
+    { once: true }
+  );
+}
+
+const tickers = new Map();
+
 function onConnect(wsClient) {
   console.log("Новый пользователь");
 
   wsClient.on("message", (message) => {
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(message);
+    console.log(JSON.parse(message));
+    const tickerName = JSON.parse(message).subs[0].split("~")[2];
+    const currency = JSON.parse(message).subs[0].split("~")[3];
+    const action = JSON.parse(message).action;
+
+    if (action === "SubRemove") {
+      tickers.delete(tickerName);
+      console.log(tickers);
+      sendWhenOpen(message);
+      return;
     }
+    if (!(tickers.get(tickerName) === currency)) {
+      tickers.set(tickerName, currency);
+      console.log(tickers);
+      sendWhenOpen(message);
+      return;
+    }
+  });
 
-    socket.addEventListener(
-      "open",
-      () => {
-        socket.send(message);
-      },
-      { once: true }
-    );
-
-    socket.addEventListener("message", (e) => {
-      wsClient.send(e.data);
-    });
+  socket.addEventListener("message", (e) => {
+    wsClient.send(e.data);
   });
 
   wsClient.on("close", () => {
+    const tickerNames = Array.from(tickers.keys());
+    tickerNames.forEach((tickerName) => {
+      const currency = tickers.get(tickerName);
+      const message = {
+        action: "SubRemove",
+        subs: [`5~CCCAGG~${tickerName}~${currency}`],
+      };
+      sendWhenOpen(JSON.stringify(message));
+      tickers.delete(tickerName);
+    });
     console.log("Пользователь отключился");
   });
 }
