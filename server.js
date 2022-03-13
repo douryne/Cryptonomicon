@@ -39,20 +39,17 @@ function onConnect(wsClient) {
   console.log("Новый пользователь");
 
   wsClient.on("message", (message) => {
-    console.log(JSON.parse(message));
     const tickerName = JSON.parse(message).subs[0].split("~")[2];
     const currency = JSON.parse(message).subs[0].split("~")[3];
     const action = JSON.parse(message).action;
 
     if (action === "SubRemove") {
       tickers.delete(tickerName);
-      console.log(tickers);
       sendWhenOpen(message);
       return;
     }
     if (!(tickers.get(tickerName) === currency)) {
       tickers.set(tickerName, currency);
-      console.log(tickers);
       sendWhenOpen(message);
       return;
     }
