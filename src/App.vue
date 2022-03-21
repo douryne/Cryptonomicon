@@ -155,12 +155,15 @@
         <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
           {{ selectedTicker.name }} - USD
         </h3>
-        <div class="flex items-end border-gray-600 border-b border-l h-64">
+        <div
+          class="flex items-end border-gray-600 border-b border-l h-64"
+          ref="graph"
+        >
           <div
             v-for="(bar, idx) in normalizedGraph"
             :key="idx"
-            :style="`height: ${bar}%`"
-            class="bg-purple-800 border w-10"
+            :style="{ height: `${bar}%`, width: `${this.graphElemWidth}px` }"
+            class="bg-purple-800 border"
           ></div>
         </div>
         <button
@@ -211,7 +214,11 @@ export default {
       filter: "",
       tickers: [],
       selectedTicker: null,
+
       graph: [],
+      maxGraphElements: 1,
+      graphElemWidth: 40,
+
       errorMessage: "",
       coinList: [],
       page: 1,
@@ -239,6 +246,20 @@ export default {
     }
 
     this.coinList = await loadTickersList();
+  },
+
+  mounted() {
+    window.addEventListener("resize", () => {
+      this.calculateMaxGraphElements();
+      this.reWriteGraph();
+    });
+  },
+
+  beforeUnmount() {
+    window.removeEventListener("resize", () => {
+      this.calculateMaxGraphElements();
+      this.reWriteGraph();
+    });
   },
 
   computed: {
@@ -322,8 +343,22 @@ export default {
       }
       if (this.selectedTicker === currency) {
         this.graph.push(price);
+        this.reWriteGraph();
       }
       currency.price = price;
+    },
+
+    calculateMaxGraphElements() {
+      if (!this.$refs.graph) return;
+      this.maxGraphElements =
+        this.$refs.graph.clientWidth / this.graphElemWidth;
+    },
+
+    reWriteGraph() {
+      if (this.graph.length > this.maxGraphElements) {
+        const diff = this.graph.length - this.maxGraphElements;
+        this.graph.splice(0, diff);
+      }
     },
 
     formatPrice(price) {
@@ -352,6 +387,7 @@ export default {
   watch: {
     selectedTicker() {
       this.graph = [];
+      this.$nextTick().then(this.calculateMaxGraphElements);
     },
     paginatedTickers() {
       if (this.paginatedTickers.length === 0 && this.page > 1) {
