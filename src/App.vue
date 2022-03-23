@@ -43,19 +43,11 @@
                 placeholder="Например DOGE"
               />
             </div>
-            <div
-              v-if="foundCoincidences.length"
-              class="flex bg-white shadow-md p-1 rounded-md flex-wrap"
-            >
-              <span
-                v-for="hint in foundCoincidences"
-                :key="hint.Symbol"
-                @click="(ticker = hint.Symbol), add()"
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                {{ hint.Symbol }}
-              </span>
-            </div>
+            <auto-complete
+              :ticker="ticker"
+              :coinList="coinList"
+              @add-ticker="add"
+            />
             <div v-if="errorMessage" class="text-sm text-red-600">
               {{ errorMessage }}
             </div>
@@ -187,12 +179,14 @@ import {
 } from "./api";
 
 import AddButton from "./components/AddButton.vue";
+import AutoComplete from "./components/AutoComplete.vue";
 
 export default {
   name: "App",
 
   components: {
     AddButton,
+    AutoComplete,
   },
 
   data() {
@@ -267,13 +261,6 @@ export default {
     hasNextPage() {
       return this.filteredTickers.length > this.endIndex;
     },
-    foundCoincidences() {
-      return this.coinList
-        .filter(
-          (t) => this.ticker && t.Symbol.startsWith(this.ticker.toUpperCase())
-        )
-        .slice(-4);
-    },
     normalizedGraph() {
       const minValue = Math.min(...this.graph);
       const maxValue = Math.max(...this.graph);
@@ -297,7 +284,10 @@ export default {
   },
 
   methods: {
-    add() {
+    add(tickerName) {
+      if (typeof tickerName === "string") {
+        this.ticker = tickerName;
+      }
       const currentTicker = {
         name: this.ticker.toUpperCase().trim(),
         price: "-",
