@@ -25,36 +25,12 @@
       </svg>
     </div> -->
     <div class="container">
-      <section>
-        <div class="flex">
-          <div class="max-w-xs">
-            <label for="wallet" class="block text-sm font-medium text-gray-500"
-              >Тикер</label
-            >
-            <div class="mt-1 relative rounded-md shadow-md">
-              <input
-                v-model="ticker"
-                @input="errorMessage = ''"
-                @keydown.enter="add"
-                type="text"
-                name="wallet"
-                id="wallet"
-                class="block w-full pr-10 border-gray-300 text-gray-600 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-                placeholder="Например DOGE"
-              />
-            </div>
-            <auto-complete
-              :ticker="ticker"
-              :coinList="coinList"
-              @add-ticker="add"
-            />
-            <div v-if="errorMessage" class="text-sm text-red-600">
-              {{ errorMessage }}
-            </div>
-          </div>
-        </div>
-        <add-button @click="add" />
-      </section>
+      <add-ticker
+        :coinList="coinList"
+        :errorMessage="errorMessage"
+        @add-ticker="add"
+        @clear-err="errorMessage = ''"
+      />
       <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 mt-5" />
         <div>
@@ -178,20 +154,17 @@ import {
   unsubscribeFromTicker,
 } from "./api";
 
-import AddButton from "./components/AddButton.vue";
-import AutoComplete from "./components/AutoComplete.vue";
+import AddTicker from "./components/AddTicker.vue";
 
 export default {
   name: "App",
 
   components: {
-    AddButton,
-    AutoComplete,
+    AddTicker,
   },
 
   data() {
     return {
-      ticker: "",
       filter: "",
       tickers: [],
       selectedTicker: null,
@@ -277,19 +250,12 @@ export default {
         page: this.page,
       };
     },
-    inputIsEmty() {
-      if (!this.ticker) return true;
-      return false;
-    },
   },
 
   methods: {
     add(tickerName) {
-      if (typeof tickerName === "string") {
-        this.ticker = tickerName;
-      }
       const currentTicker = {
-        name: this.ticker.toUpperCase().trim(),
+        name: tickerName.toUpperCase().trim(),
         price: "-",
         invalid: true,
       };
@@ -298,7 +264,8 @@ export default {
         this.errorMessage = "Такой тикер уже добавлен";
         return;
       }
-      if (this.inputIsEmty) {
+
+      if (!tickerName) {
         this.errorMessage = "Введите тикер";
         return;
       }
@@ -306,7 +273,6 @@ export default {
       this.tickers = [...this.tickers, currentTicker];
 
       this.filter = "";
-      this.ticker = "";
       subscribeToTicker(currentTicker.name, (newPrice) => {
         this.updateTicker(currentTicker.name, newPrice);
       });

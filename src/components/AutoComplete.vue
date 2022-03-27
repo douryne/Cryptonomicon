@@ -25,10 +25,11 @@ export default {
     coinList: {
       type: Array,
       require: true,
-      default: () => {
-        return [];
-      },
+      default: () => [],
     },
+  },
+  emits: {
+    "add-ticker": (value) => typeof value === "string",
   },
   computed: {
     foundCoincidences() {
